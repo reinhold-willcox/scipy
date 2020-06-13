@@ -974,11 +974,11 @@ def w4(func, x0, fprime, args=(), xtol=1.48e-8, maxiter=2000,  # TODO: come back
         if fder == 0:
             # FIXME: Need to think through this better
             fder = 1e-5
-            newton_step = fval / fder
+        newton_step = fval / fder
 
         x_new = x_old - delta_tau * p_old
         p_new = (1.0 - 2 * delta_tau) * p_old - delta_tau * newton_step
-        if np.isclose(x_new, x_old, rtol=rtol, atol=tol):
+        if np.isclose(x_new, x_old, rtol=rtol, atol=xtol):
             return _results_select(
                 full_output, (x_new, funcalls, itr + 1, _ECONVERGED))
         x_old = x_new
