@@ -881,8 +881,8 @@ def brenth(f, a, b, args=(),
     r = _zeros._brenth(f, a, b, xtol, rtol, maxiter, args, full_output, disp)
     return results_c(full_output, r)
 
-def w4(func, x0, fprime, args=(), tol=1.48e-8, maxiter=2000, # TODO: come back to this
-           rtol=0.0, full_output=False, disp=True):
+def w4(func, x0, fprime, args=(), tol=1.48e-8, maxiter=2000,  # TODO: come back to this
+       rtol=0.0, full_output=False, delta_tau=0.5, disp=True):
     """Find a root of a function in a bracketing interval using Brent's
     method with hyperbolic extrapolation.
 
@@ -948,15 +948,16 @@ def w4(func, x0, fprime, args=(), tol=1.48e-8, maxiter=2000, # TODO: come back t
     maxiter = operator.index(maxiter)
     if maxiter < 1:
         raise ValueError("maxiter must be greater than 0")
-    if np.size(x0) > 1:
-		# TODO: write an _array_w4
-        return _array_newton(func, x0, fprime, args, tol, maxiter, fprime2,
-                             full_output)
+
+    if np.size(x0) > 1: # TODO: write an _array_w4
+        raise NotImplementedError
+
+    if not (0 < delta_tau < 1):
+        raise ValueError("delta_tau (%g) must be between (0,1)" % delta_tau)
    
     # Convert to float (don't use float(x0); this works also for complex x0)
-	x_old = 1.0 * x0
-	p_old = 0.0
-	
+    x_old, p_old = np.float64(x0), np.float64(0)
+
     funcalls = 0
     # w4 method
     for itr in range(maxiter):
@@ -970,16 +971,17 @@ def w4(func, x0, fprime, args=(), tol=1.48e-8, maxiter=2000, # TODO: come back t
         fder = fprime(x_old, *args)
         funcalls += 1
         if fder == 0:
-			# Need to think through this better
-			fder = 1e-5
-        newton_step = fval / fder
-        x_new = x_old - deltaTau*p_old
-		p_new = (1.0-2*deltaTau)*p_old - deltaTau*newton_step
+            # FIXME: Need to think through this better
+            fder = 1e-5
+            newton_step = fval / fder
+
+        x_new = x_old - delta_tau * p_old
+        p_new = (1.0 - 2 * delta_tau) * p_old - delta_tau * newton_step
         if np.isclose(x_new, x_old, rtol=rtol, atol=tol):
             return _results_select(
                 full_output, (x_new, funcalls, itr + 1, _ECONVERGED))
         x_old = x_new
-		p_old = p_new
+        p_old = p_new
 
     if disp:
         msg = ("Failed to converge after %d iterations, value is %s."
