@@ -258,8 +258,6 @@ def root_scalar(f, args=(), method=None, bracket=None,
     elif meth in ['w4']:
         if not fprime:
             raise ValueError('fprime must be specified for %s' % method)
-        if 'xtol' in kwargs:
-            kwargs['tol'] = kwargs.pop('xtol')
         r, sol = methodc(f, x0, args=args, fprime=fprime,
                          **kwargs)
     elif meth in ['newton']:
