@@ -289,7 +289,12 @@ class TestBasic(object):
             assert_allclose(f(r.root), 0, atol=1e-6)
 
     def test_w4_by_name(self):
-        raise NotImplementedError
+        r"""Invoke w4 through root_scalar()"""
+        for f, f_1, f_2 in [(f1, f1_1, f1_2), (f2, f2_1, f2_2)]:
+            r = root_scalar(f, method='w4', x0=3, x1=2, xtol=1e-6)
+            assert_allclose(f(r.root), 0, atol=1e-6)
+            r = root_scalar(f, method='w4', x0=3, x1=5, xtol=1e-6)
+            assert_allclose(f(r.root), 0, atol=1e-6)
 
     def test_halley_by_name(self):
         r"""Invoke halley through root_scalar()"""
