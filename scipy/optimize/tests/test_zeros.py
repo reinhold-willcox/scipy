@@ -219,6 +219,9 @@ class TestBasic(object):
         self.run_check_by_name('toms748')
         self.run_collection('aps', zeros.toms748, 'toms748', smoothness=1)
 
+    def test_w4(self):
+        raise NotImplementedError
+
     def test_newton_collections(self):
         known_fail = ['aps.13.00']
         known_fail += ['aps.12.05', 'aps.12.17']  # fails under Windows Py27
@@ -284,6 +287,9 @@ class TestBasic(object):
             assert_allclose(f(r.root), 0, atol=1e-6)
             r = root_scalar(f, method='secant', x0=3, x1=5, xtol=1e-6)
             assert_allclose(f(r.root), 0, atol=1e-6)
+
+    def test_w4_by_name(self):
+        raise NotImplementedError
 
     def test_halley_by_name(self):
         r"""Invoke halley through root_scalar()"""
