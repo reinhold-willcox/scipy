@@ -260,7 +260,7 @@ def root_scalar(f, args=(), method=None, bracket=None,
             raise ValueError('fprime must be specified for %s' % method)
         if 'xtol' in kwargs:
             kwargs['tol'] = kwargs.pop('xtol')
-        r, sol = methodc(f, x0, args=args, fprime=fprime, fprime2=None,
+        r, sol = methodc(f, x0, args=args, fprime=fprime,
                          **kwargs)
     elif meth in ['newton']:
         if x0 is None:
