@@ -881,7 +881,7 @@ def brenth(f, a, b, args=(),
     r = _zeros._brenth(f, a, b, xtol, rtol, maxiter, args, full_output, disp)
     return results_c(full_output, r)
 
-def w4(func, x0, fprime, args=(), tol=1.48e-8, maxiter=2000,  # TODO: come back to this
+def w4(func, x0, fprime, args=(), xtol=1.48e-8, maxiter=2000,  # TODO: come back to this
        rtol=0.0, full_output=False, delta_tau=0.5, disp=True):
     """Find a root of a function in a bracketing interval using Brent's
     method with hyperbolic extrapolation.
@@ -943,8 +943,8 @@ def w4(func, x0, fprime, args=(), tol=1.48e-8, maxiter=2000,  # TODO: come back 
     --------
     """
 
-    if tol <= 0:
-        raise ValueError("tol too small (%g <= 0)" % tol)
+    if xtol <= 0:
+        raise ValueError("tol too small (%g <= 0)" % xtol)
     maxiter = operator.index(maxiter)
     if maxiter < 1:
         raise ValueError("maxiter must be greater than 0")
