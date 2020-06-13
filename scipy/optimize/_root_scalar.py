@@ -78,6 +78,7 @@ def root_scalar(f, args=(), method=None, bracket=None,
             - 'ridder'    :ref:`(see here) <optimize.root_scalar-ridder>`
             - 'toms748'    :ref:`(see here) <optimize.root_scalar-toms748>`
             - 'newton'    :ref:`(see here) <optimize.root_scalar-newton>`
+            - 'w4'        :ref:`(see here) <optimize.root_scalar-w4>`
             - 'secant'    :ref:`(see here) <optimize.root_scalar-secant>`
             - 'halley'    :ref:`(see here) <optimize.root_scalar-halley>`
 
@@ -253,6 +254,14 @@ def root_scalar(f, args=(), method=None, bracket=None,
             kwargs['tol'] = kwargs.pop('xtol')
         r, sol = methodc(f, x0, args=args, fprime=None, fprime2=None,
                          x1=x1, **kwargs)
+
+    elif meth in ['w4']:
+        if not fprime:
+            raise ValueError('fprime must be specified for %s' % method)
+        if 'xtol' in kwargs:
+            kwargs['tol'] = kwargs.pop('xtol')
+        r, sol = methodc(f, x0, args=args, fprime=fprime, fprime2=None,
+                         **kwargs)
     elif meth in ['newton']:
         if x0 is None:
             raise ValueError('x0 must not be None for %s' % method)
