@@ -949,14 +949,15 @@ def w4(func, x0, fprime, args=(), tol=1.48e-8, maxiter=2000,  # TODO: come back 
     if maxiter < 1:
         raise ValueError("maxiter must be greater than 0")
 
-    if np.size(x0) > 1: # TODO: write an _array_w4
+    if np.size(x0) > 1:  # TODO: write an _array_w4
         raise NotImplementedError
 
     if not (0 < delta_tau < 1):
         raise ValueError("delta_tau (%g) must be between (0,1)" % delta_tau)
    
     # Convert to float (don't use float(x0); this works also for complex x0)
-    x_old, p_old = np.float64(x0), np.float64(0)
+    x_old = 1.0 * x0
+    p_old = 0.0
 
     funcalls = 0
     # w4 method
