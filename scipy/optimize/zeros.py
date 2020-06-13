@@ -881,9 +881,8 @@ def brenth(f, a, b, args=(),
     r = _zeros._brenth(f, a, b, xtol, rtol, maxiter, args, full_output, disp)
     return results_c(full_output, r)
 
-def w4(f, a, b, args=(),
-           xtol=_xtol, rtol=_rtol, maxiter=_iter,
-           full_output=False, disp=True):
+def w4(func, x0, fprime, args=(), tol=1.48e-8, maxiter=2000, # TODO: come back to this
+           rtol=0.0, full_output=False, disp=True):
     """Find a root of a function in a bracketing interval using Brent's
     method with hyperbolic extrapolation.
 
@@ -943,7 +942,52 @@ def w4(f, a, b, args=(),
     Examples
     --------
     """
-    raise NotImplementedError
+
+    if tol <= 0:
+        raise ValueError("tol too small (%g <= 0)" % tol)
+    maxiter = operator.index(maxiter)
+    if maxiter < 1:
+        raise ValueError("maxiter must be greater than 0")
+    if np.size(x0) > 1:
+		# TODO: write an _array_w4
+        return _array_newton(func, x0, fprime, args, tol, maxiter, fprime2,
+                             full_output)
+   
+    # Convert to float (don't use float(x0); this works also for complex x0)
+	x_old = 1.0 * x0
+	p_old = 0.0
+	
+    funcalls = 0
+    # w4 method
+    for itr in range(maxiter):
+        # first evaluate fval
+        fval = func(x_old, *args)
+        funcalls += 1
+        # If fval is 0, a root has been found, then terminate
+        if fval == 0:
+            return _results_select(
+                full_output, (x_old, funcalls, itr, _ECONVERGED))
+        fder = fprime(x_old, *args)
+        funcalls += 1
+        if fder == 0:
+			# Need to think through this better
+			fder = 1e-5
+        newton_step = fval / fder
+        x_new = x_old - deltaTau*p_old
+		p_new = (1.0-2*deltaTau)*p_old - deltaTau*newton_step
+        if np.isclose(x_new, x_old, rtol=rtol, atol=tol):
+            return _results_select(
+                full_output, (x_new, funcalls, itr + 1, _ECONVERGED))
+        x_old = x_new
+		p_old = p_new
+
+    if disp:
+        msg = ("Failed to converge after %d iterations, value is %s."
+               % (itr + 1, x_new))
+        raise RuntimeError(msg)
+
+    return _results_select(full_output, (x_new, funcalls, itr + 1, _ECONVERR))
+
 
 ################################
 # TOMS "Algorithm 748: Enclosing Zeros of Continuous Functions", by
