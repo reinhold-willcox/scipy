@@ -1,6 +1,6 @@
 import pytest
 
-from math import sqrt, exp, sin, cos
+from math import sqrt, exp, sin, cos, atan
 from functools import lru_cache
 
 from numpy.testing import (assert_warns, assert_,
@@ -220,7 +220,10 @@ class TestBasic(object):
         self.run_collection('aps', zeros.toms748, 'toms748', smoothness=1)
 
     def test_w4(self):
-        raise NotImplementedError
+        self.run_check(zeros.w4, 'w4')
+        self.run_check_lru_cached(zeros.w4, 'w4')
+        self.run_check_by_name('w4')
+        self.run_collection('aps', zeros.w4, 'w4')
 
     def test_newton_collections(self):
         known_fail = ['aps.13.00']
@@ -308,6 +311,8 @@ class TestBasic(object):
             root_scalar(f1, method='secant', x0=3, xtol=1e-6)  # no x1
         with pytest.raises(ValueError):
             root_scalar(f1, method='newton', x0=3, xtol=1e-6)  # no fprime
+        with pytest.raises(ValueError):
+            root_scalar(f1, method='w4', x0=3, xtol=1e-6)  # no fprime
         with pytest.raises(ValueError):
             root_scalar(f1, method='halley', fprime=f1_1, x0=3, xtol=1e-6)  # no fprime2
         with pytest.raises(ValueError):
@@ -583,6 +588,14 @@ def test_zero_der_nz_dp():
     assert_allclose(x, -1)
     with pytest.raises(RuntimeError, match='Tolerance of'):
         x = zeros.newton(lambda y: (y + 1.0) ** 2, x0=p0, disp=True)
+
+
+def test_w4_pass_but_newton_fail():
+    def f_0(x):
+        return atan(x) + sin(x) - 1
+
+    def ddx_f_0(x):
+        return (1 / (1 + x ** 2)) + cos(x)
 
 
 def test_array_newton_failures():
