@@ -881,67 +881,153 @@ def brenth(f, a, b, args=(),
     r = _zeros._brenth(f, a, b, xtol, rtol, maxiter, args, full_output, disp)
     return results_c(full_output, r)
 
+
 def w4(func, x0, fprime, args=(), xtol=1.48e-8, maxiter=2000,  # TODO: come back to this
        rtol=0.0, full_output=False, delta_tau=0.5, disp=True):
-    """Find a root of a function in a bracketing interval using Brent's
-    method with hyperbolic extrapolation.
 
-    A variation on the classic Brent routine to find a zero of the function f
-    between the arguments a and b that uses hyperbolic extrapolation instead of
-    inverse quadratic extrapolation. There was a paper back in the 1980's ...
-    f(a) and f(b) cannot have the same signs. Generally, on a par with the
-    brent routine, but not as heavily tested. It is a safe version of the
-    secant method that uses hyperbolic extrapolation. The version here is by
-    Chuck Harris.
+    """
+    Find a zero of a real or complex function in any intervale 
+    using the w4 method. 
+
+    Find a zero of the function `func` given a nearby starting point `x0`.
+    The w4 method is used, which converges across the whole domain.
+
+    If `x0` is a sequence with more than one item, then `w4` returns an
+    array, and `func` must be vectorized and return a sequence or array of the
+    same shape as its first argument. `fprime` must also have the same shape.
 
     Parameters
     ----------
-    f : function
-        Python function returning a number. f must be continuous, and f(a) and
-        f(b) must have opposite signs.
-    a : scalar
-        One end of the bracketing interval [a,b].
-    b : scalar
-        The other end of the bracketing interval [a,b].
-    xtol : number, optional
-        The computed root ``x0`` will satisfy ``np.allclose(x, x0,
-        atol=xtol, rtol=rtol)``, where ``x`` is the exact root. The
-        parameter must be nonnegative. As with `brentq`, for nice
-        functions the method will often satisfy the above condition
-        with ``xtol/2`` and ``rtol/2``.
-    rtol : number, optional
-        The computed root ``x0`` will satisfy ``np.allclose(x, x0,
-        atol=xtol, rtol=rtol)``, where ``x`` is the exact root. The
-        parameter cannot be smaller than its default value of
-        ``4*np.finfo(float).eps``. As with `brentq`, for nice functions
-        the method will often satisfy the above condition with
-        ``xtol/2`` and ``rtol/2``.
-    maxiter : int, optional
-        If convergence is not achieved in `maxiter` iterations, an error is
-        raised. Must be >= 0.
+    func : callable
+        The function whose zero is wanted. It must be a function of a
+        single variable of the form ``f(x,a,b,c...)``, where ``a,b,c...``
+        are extra arguments that can be passed in the `args` parameter.
+    x0 : float, sequence, or ndarray
+        An initial estimate of the zero that should be somewhere near the
+        actual zero. If not scalar, then `func` must be vectorized and return
+        a sequence or array of the same shape as its first argument.
+    fprime : callable
+        The derivative of the function. Must be able to accept x0 as input and 
+        return the same shape. 
     args : tuple, optional
-        Containing extra arguments for the function `f`.
-        `f` is called by ``apply(f, (x)+args)``.
+        Extra arguments to be used in the function call.
+    tol : float, optional
+        The allowable error of the zero value. If `func` is complex-valued,
+        a larger `tol` is recommended as both the real and imaginary parts
+        of `x` contribute to ``|x - x0|``.
+    maxiter : int, optional
+        Maximum number of iterations.
+    rtol : float, optional
+        Tolerance (relative) for termination.
     full_output : bool, optional
-        If `full_output` is False, the root is returned. If `full_output` is
-        True, the return value is ``(x, r)``, where `x` is the root, and `r` is
-        a `RootResults` object.
+        If `full_output` is False (default), the root is returned.
+        If True and `x0` is scalar, the return value is ``(x, r)``, where ``x``
+        is the root and ``r`` is a `RootResults` object.
+        If True and `x0` is non-scalar, the return value is ``(x, converged,
+        zero_der)`` (see Returns section for details).
     disp : bool, optional
-        If True, raise RuntimeError if the algorithm didn't converge.
-        Otherwise, the convergence status is recorded in any `RootResults`
-        return object.
+        If True, raise a RuntimeError if the algorithm didn't converge, with
+        the error message containing the number of iterations and current
+        function value. Otherwise, the convergence status is recorded in a
+        `RootResults` return object.
+        Ignored if `x0` is not scalar.
+        *Note: this has little to do with displaying, however,
+        the `disp` keyword cannot be renamed for backwards compatibility.*
 
     Returns
     -------
-    x0 : float
-        Zero of `f` between `a` and `b`.
-    r : `RootResults` (present if ``full_output = True``)
+    root : float, sequence, or ndarray
+        Estimated location where function is zero.
+    r : `RootResults`, optional
+        Present if ``full_output=True`` and `x0` is scalar.
         Object containing information about the convergence. In particular,
         ``r.converged`` is True if the routine converged.
+    converged : ndarray of bool, optional
+        Present if ``full_output=True`` and `x0` is non-scalar.
+        For vector functions, indicates which elements converged successfully.
+    zero_der : ndarray of bool, optional
+        Present if ``full_output=True`` and `x0` is non-scalar.
+        For vector functions, indicates which elements had a zero derivative.
+
+    See Also
+    --------
+    newton
+    fsolve : find zeros in N dimensions.
+
+    Notes
+    -----
+    The convergence rate of the w4 method is linear, compared with
+    quadratic for the Newton-Raphson method, cubic for the 
+    Halley method, and sub-quadratic for the secant method.
+    (See `newton` for details). However, the stopping criterion used
+    here is the step size and there is no guarantee that a zero
+    has been found. Consequently, the result should be verified.
+
+    The advantage of the w4 method over other methods for 1 variable
+    is that it has global convergence, i.e any initial guess will result
+    in a zero (after a sufficient number of iterations).
 
     Examples
     --------
+    >>> from scipy import optimize
+    >>> import matplotlib.pyplot as plt
+
+    >>> def f(x):
+    ...     return (x**3 - 1)  # only one real root at x = 1
+
+    ``fprime`` is not provided, use the secant method:
+
+    >>> root = optimize.newton(f, 1.5)
+    >>> root
+    1.0000000000000016
+    >>> root = optimize.newton(f, 1.5, fprime2=lambda x: 6 * x)
+    >>> root
+    1.0000000000000016
+
+    Only ``fprime`` is provided, use the Newton-Raphson method:
+
+    >>> root = optimize.newton(f, 1.5, fprime=lambda x: 3 * x**2)
+    >>> root
+    1.0
+
+    Both ``fprime2`` and ``fprime`` are provided, use Halley's method:
+
+    >>> root = optimize.newton(f, 1.5, fprime=lambda x: 3 * x**2,
+    ...                        fprime2=lambda x: 6 * x)
+    >>> root
+    1.0
+
+    When we want to find zeros for a set of related starting values and/or
+    function parameters, we can provide both of those as an array of inputs:
+
+    >>> f = lambda x, a: x**3 - a
+    >>> fder = lambda x, a: 3 * x**2
+    >>> np.random.seed(4321)
+    >>> x = np.random.randn(100)
+    >>> a = np.arange(-50, 50)
+    >>> vec_res = optimize.newton(f, x, fprime=fder, args=(a, ))
+
+    The above is the equivalent of solving for each value in ``(x, a)``
+    separately in a for-loop, just faster:
+
+    >>> loop_res = [optimize.newton(f, x0, fprime=fder, args=(a0,))
+    ...             for x0, a0 in zip(x, a)]
+    >>> np.allclose(vec_res, loop_res)
+    True
+
+    Plot the results found for all values of ``a``:
+
+    >>> analytical_result = np.sign(a) * np.abs(a)**(1/3)
+    >>> fig = plt.figure()
+    >>> ax = fig.add_subplot(111)
+    >>> ax.plot(a, analytical_result, 'o')
+    >>> ax.plot(a, vec_res, '.')
+    >>> ax.set_xlabel('$a$')
+    >>> ax.set_ylabel('$x$ where $f(x, a)=0$')
+    >>> plt.show()
+
     """
+
 
     if xtol <= 0:
         raise ValueError("tol too small (%g <= 0)" % xtol)
@@ -975,7 +1061,6 @@ def w4(func, x0, fprime, args=(), xtol=1.48e-8, maxiter=2000,  # TODO: come back
             # FIXME: Need to think through this better
             fder = 1e-5
         newton_step = fval / fder
-
         x_new = x_old - delta_tau * p_old
         p_new = (1.0 - 2 * delta_tau) * p_old - delta_tau * newton_step
         if np.isclose(x_new, x_old, rtol=rtol, atol=xtol):
